@@ -13,28 +13,6 @@
 
 start_link(Socket) -> gen_server:start_link(?MODULE, Socket, []).
 
-add_hub(HubName) ->
-    emh_hubserv:add_hub(remove_blank_spaces(HubName)).
-
-remove_hub(HubName) ->
-    emh_hubserv:remove_hub(remove_blank_spaces(HubName)).
-
-list_hubs() ->
-    string:join([binary_to_list(B) || B <- emh_hubserv:list_hubs()], ", ").
-
-subscribe_hub(HubName) ->
-    emh_hubserv:add_client(self(), remove_blank_spaces(HubName)).
-
-unsubscribe_hub(HubName) ->
-    emh_hubserv:remove_client(self(), remove_blank_spaces(HubName)).
-
-publish_hub(HubMsg) ->
-    HubMsgStr = binary_to_list(HubMsg),
-    ColonPosition = string:str(HubMsgStr, ":"),
-    HubName = list_to_binary(string:substr(HubMsgStr, 1, ColonPosition - 1)),
-    Msg = list_to_binary(string:substr(HubMsgStr, ColonPosition + 1)),
-    emh_hubserv:publish(HubName, Msg).
-
 %%% Server functions
 init(Socket) ->
     gen_server:cast(self(), accept),
@@ -87,6 +65,29 @@ terminate(normal, _Socket) ->
 
 code_change(_OldVsn, Hubs, _Extra) ->
     {ok, Hubs}.
+
+%% Private functions.
+add_hub(HubName) ->
+    emh_hubserv:add_hub(remove_blank_spaces(HubName)).
+
+remove_hub(HubName) ->
+    emh_hubserv:remove_hub(remove_blank_spaces(HubName)).
+
+list_hubs() ->
+    string:join([binary_to_list(B) || B <- emh_hubserv:list_hubs()], ", ").
+
+subscribe_hub(HubName) ->
+    emh_hubserv:add_client(self(), remove_blank_spaces(HubName)).
+
+unsubscribe_hub(HubName) ->
+    emh_hubserv:remove_client(self(), remove_blank_spaces(HubName)).
+
+publish_hub(HubMsg) ->
+    HubMsgStr = binary_to_list(HubMsg),
+    ColonPosition = string:str(HubMsgStr, ":"),
+    HubName = list_to_binary(string:substr(HubMsgStr, 1, ColonPosition - 1)),
+    Msg = list_to_binary(string:substr(HubMsgStr, ColonPosition + 1)),
+    emh_hubserv:publish(HubName, Msg).
 
 send(Socket, <<BitStr/binary>>, Args) ->
     send(Socket, binary_to_list(BitStr), Args);
