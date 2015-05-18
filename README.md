@@ -1,6 +1,4 @@
 # EMH - Erlang Message Hub
-## Deploying on heroku.
-Because of a heroku limitation is not possible to try the TCP/UDP features because heroku only forward the port 80.
 
 ## Compilation
     git clone git@github.com:caioceccon/emh.git
