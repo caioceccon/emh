@@ -11,6 +11,7 @@
 -define(SERVER_HELLO, "Welcome to Erlang Message Hub!!\r\n"
                       "To add a Hub use `Add:HubName`\r\n"
                       "To remove a Hub use `Remove:HubName`\r\n"
+                      "To list Hubs use `List:`\r\n"
                       "To subscribe a Hub use `Subscribe:HubName`\r\n"
                       "To unsubscribe a Hub use `Unsubscribe:HubName`\r\n"
                       "To publish a Hub use `Publish:HubName:Message`\r\n").
