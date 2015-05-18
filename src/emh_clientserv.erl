@@ -8,8 +8,12 @@
 -export([init/1, handle_cast/2, handle_info/2,
          terminate/2, code_change/3]).
 
--define(SERVER_HELLO, "Welcome to Erlang message Hub!").
-
+-define(SERVER_HELLO, "Welcome to Erlang Message Hub!!\r\n"
+                      "To add a Hub use `Add:HubName`\r\n"
+                      "To remove a Hub use `Remove:HubName`\r\n"
+                      "To subscribe a Hub use `Subscribe:HubName`\r\n"
+                      "To unsubscribe a Hub use `Unsubscribe:HubName`\r\n"
+                      "To publish a Hub use `Publish:HubName:Message`\r\n").
 
 start_link(Socket) -> gen_server:start_link(?MODULE, Socket, []).
 
