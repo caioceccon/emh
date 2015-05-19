@@ -1,25 +1,19 @@
 -module(emh_clientserv_sup).
 -behaviour(supervisor).
 
--export([start_link/0, start_socket/0, init/1]).
+-export([start_link/1, start_socket/0, init/1]).
 
-start_link() ->
-    supervisor:start_link({local, ?MODULE}, ?MODULE, []).
+start_link(Port) ->
+    supervisor:start_link({local, ?MODULE}, ?MODULE, [Port]).
 
-init([]) ->
-    Port =
-        case application:get_env(port) of
-            {ok, P} -> P;
-            undefined -> 9090
-        end,
-
+init([Port]) ->
     %% Set the socket into {active_once} mode.
     {ok, ListenSocket} = gen_tcp:listen(Port, [binary, {active,once}, {packet,line}]),
     spawn_link(fun empty_listeners/0),
 
     {ok, {{simple_one_for_one, 60, 3600},
     [{emh_clientserv,
-     {emh_clientserv, start_link, [ListenSocket]},
+     {emh_clientserv, start_link, [{tcp, ListenSocket}]},
      temporary, 1000, worker, [emh_clientserv]}
     ]}}.
 

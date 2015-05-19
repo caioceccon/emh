@@ -1,7 +1,3 @@
-% Message Hub
-% Develop an in-memory message hub. The hub must support publish and subscribe actions on 
-% arbitrary data sets via TCP and UDP.
-
 -module(emh_hubserv).
 -behaviour(gen_server).
 
@@ -33,14 +29,15 @@ remove_client(ClientPid, HubName) ->
     gen_server:call(hubserv, {unsubscribe, ClientPid, HubName}).
 
 publish(HubName, Msg) ->
-    gen_server:cast(hubserv, {publish, HubName, Msg}).
+    gen_server:call(hubserv, {publish, HubName, Msg}).
 
 %%% Server functions
 init([]) -> {ok, orddict:new()}.
 
 %% Add a hub.
 handle_call({add, Name}, _From, Hubs) when is_bitstring(Name) ->
-    {reply, ok, make_hub(Name, Hubs)};
+    {Res, NewHubs} = make_hub(Name, Hubs),
+    {reply, Res, NewHubs};
 
 %% Remove a hub.
 handle_call({remove, Name}, _From, Hubs) when is_bitstring(Name) ->
@@ -53,17 +50,21 @@ handle_call(list, _From, Hubs) ->
 %% Subscribe hub.
 handle_call({subscribe, ClientPid, HubName}, _From, Hubs) when is_bitstring(HubName),
                                                                is_pid(ClientPid) ->
-    {reply, ok, subscribe(ClientPid, HubName, Hubs)};
+    {Res, NewHubs} = subscribe(ClientPid, HubName, Hubs),
+    {reply, Res, NewHubs};
 
 %% Unsubscribe hub.
 handle_call({unsubscribe, ClientPid, HubName}, _From, Hubs) when is_bitstring(HubName),
                                                                  is_pid(ClientPid) ->
-    {reply, ok, unsubscribe(ClientPid, HubName, Hubs)}.
+    {Res, NewHubs} = unsubscribe(ClientPid, HubName, Hubs),
+    {reply, Res, NewHubs};
 
 %% Publish hub.
-handle_cast({publish, HubName, Msg}, Hubs) when is_bitstring(HubName),
-                                                is_bitstring(Msg) ->
-    publish_msg(HubName, Msg, Hubs),
+handle_call({publish, HubName, Msg}, _From, Hubs) when is_bitstring(HubName),
+                                                       is_bitstring(Msg) ->
+    {reply, publish_msg(HubName, Msg, Hubs), Hubs}.
+
+handle_cast(_, Hubs) ->
     {noreply, Hubs}.
 
 handle_info(Msg, Hubs) ->
@@ -75,41 +76,37 @@ terminate(normal, Hubs) ->
     ok.
 
 code_change(_OldVsn, Hubs, _Extra) ->
-    {ok, Hubs}.    
+    {ok, Hubs}.
 
 %%% Private functions
 make_hub(Name, Hubs) ->
     case orddict:is_key(Name, Hubs) of
         true ->
-            Hubs;
+            {hub_already_exist, Hubs};
         false ->
-            orddict:store(Name, #hub{}, Hubs)
+            {ok, orddict:store(Name, #hub{}, Hubs)}
     end.
 
 subscribe(ClientPid, HubName, Hubs) ->
     case orddict:find(HubName, Hubs) of
         {ok, H} ->
             NewClients = orddict:store(ClientPid, true, H#hub.clients),
-            orddict:store(HubName, #hub{clients=NewClients}, Hubs);
-        error -> erlang:error(hub_not_found)
+            {ok, orddict:store(HubName, #hub{clients=NewClients}, Hubs)};
+        error -> {hub_not_found, Hubs}
     end.
 
 unsubscribe(ClientPid, HubName, Hubs) ->
     case orddict:find(HubName, Hubs) of
         {ok, H} ->
             NewClients = orddict:erase(ClientPid, H#hub.clients),
-            orddict:store(HubName, #hub{clients=NewClients}, Hubs);
-        error -> erlang:error(hub_not_found)
+            {ok, orddict:store(HubName, #hub{clients=NewClients}, Hubs)};
+        error -> {ok, Hubs}
     end.
 
 publish_msg(HubName, Msg, Hubs) ->
     case orddict:find(HubName, Hubs) of
         {ok, _Hub = #hub{clients=Clients}} ->
-            [C ! {msg, Msg} || C <- orddict:fetch_keys(Clients)];
-        error -> erlang:error(hub_not_found)
+            [C ! {msg, Msg} || C <- orddict:fetch_keys(Clients)],
+            ok;
+        error -> hub_not_found
     end.
-
-
-
-
-
