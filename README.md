@@ -11,7 +11,7 @@
     application:start(emh).
 
 ## Using TCP version with telnet
-    telnet localhost 9023
+    telnet localhost 9090
     Trying 127.0.0.1...
     Connected to localhost.
     Escape character is '^]'.
@@ -22,3 +22,6 @@
     To subscribe a Hub use `Subscribe:HubName`
     To unsubscribe a Hub use `Unsubscribe:HubName`
     To publish a Hub use `Publish:HubName:Message`
+
+## Using UDP
+UDP support the same protocol that TCP except for the Subscribe and Unsubscribe commands not yet implemented.
