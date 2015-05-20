@@ -24,4 +24,4 @@
     To publish a Hub use `Publish:HubName:Message`
 
 ## Using UDP
-UDP support the same protocol that TCP except for the Subscribe and Unsubscribe commands not yet implemented.
+The UDP port run on the port 9091 following the logic port TCP + 1 and support the same protocol that TCP service except for the Subscribe and Unsubscribe commands not yet implemented.
